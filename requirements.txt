@@ -4,3 +4,5 @@ langgraph
 # langchain-openai
 tavily-python
 langgraph-checkpoint-sqlite
+polyline
+requests

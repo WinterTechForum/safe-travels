@@ -21,8 +21,15 @@ for step in agent_executor.stream(
 ):
     step["messages"][-1].pretty_print()
 
+# for step in agent_executor.stream(
+#         {"messages": [HumanMessage(content="plot a route from where I live to Denver, CO")]},
+#         config,
+#         stream_mode="values",
+# ):
+#     step["messages"][-1].pretty_print()
+
 for step in agent_executor.stream(
-        {"messages": [HumanMessage(content="whats the weather where I live?")]},
+        {"messages": [HumanMessage(content="Get the latitude and longitude for my city.")]},
         config,
         stream_mode="values",
 ):
