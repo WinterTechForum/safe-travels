@@ -4,7 +4,7 @@ from langchain_core.tools import tool
 
 
 @tool
-def assess_danger(point: dict[str, Any]) -> float:
+def assess_danger(point: dict[str, Any] | None = None) -> float:
     """
     Compute the danger score of a point based on the weather information.
 

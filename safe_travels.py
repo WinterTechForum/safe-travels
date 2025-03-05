@@ -25,19 +25,27 @@ config = {"configurable": {"thread_id": thread_id}}
 
 # HumanMessage(content="get the weather forecast at each point along that route, assuming we depart the origin city at 7:00 AM on 2025-03-08.")
 
-
 for step in agent_executor.stream(
-        {
-            "messages": [
-                HumanMessage(content='derive a route from Crested Butte, CO to Denver, CO, '
-                                     'departing at 7:00 AM on 2025-03-08.'),
-                HumanMessage(content='get any weather events at each point along that route, '
-                                     'assuming we depart the origin city at 7:00 AM on 2025-03-08.'),
-                HumanMessage(content='asses the danger of each point along that route using '
-                                     'the results from the previous step.')
-            ]
-        },
+        {"messages": [HumanMessage(content='derive a route from Crested Butte, CO to Denver, CO, '
+                                           'departing at 7:00 AM on 2025-03-08.')]},
         config,
         stream_mode="values",
 ):
     step["messages"][-1].pretty_print()
+
+for step in agent_executor.stream(
+        {"messages": [HumanMessage(content='get the weather events at each point along that route, '
+                                           'and then assess the danger at each point, '
+                                           'assuming we depart the origin city at 7:00 AM on 2025-03-08.'), ]},
+        config,
+        stream_mode="values",
+):
+    step["messages"][-1].pretty_print()
+
+# for step in agent_executor.stream(
+#         {"messages": [HumanMessage(content='asses the danger of each weather value '
+#                                            'from the previous step.')]},
+#         config,
+#         stream_mode="values",
+# ):
+#     step["messages"][-1].pretty_print()
