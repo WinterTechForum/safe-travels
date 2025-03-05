@@ -1,22 +1,7 @@
-import getpass
-import os
-
-if not os.environ.get("OPENAI_API_KEY"):
-  os.environ["OPENAI_API_KEY"] = getpass.getpass("Enter API key for OpenAI: ")
-
-from langchain.chat_models import init_chat_model
-
-model = init_chat_model("gpt-4o", model_provider="openai")
-
-from langchain_core.messages import HumanMessage
-
-response = model.invoke([HumanMessage(content="hi!")])
-print(response.content)
-
 # Import relevant functionality
-from langchain_openai import ChatOpenAI
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import create_react_agent
 
@@ -34,11 +19,11 @@ for step in agent_executor.stream(
         config,
         stream_mode="values",
 ):
-  step["messages"][-1].pretty_print()
+    step["messages"][-1].pretty_print()
 
 for step in agent_executor.stream(
         {"messages": [HumanMessage(content="whats the weather where I live?")]},
         config,
         stream_mode="values",
 ):
-  step["messages"][-1].pretty_print()
+    step["messages"][-1].pretty_print()
