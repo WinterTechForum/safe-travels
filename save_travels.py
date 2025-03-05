@@ -24,3 +24,10 @@ for step in agent_executor.stream(
         stream_mode="values",
 ):
     step["messages"][-1].pretty_print()
+
+for step in agent_executor.stream(
+        {"messages": [HumanMessage(content="get the weather forecast at each point along that route")]},
+        config,
+        stream_mode="values",
+):
+    step["messages"][-1].pretty_print()

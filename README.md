@@ -3,6 +3,15 @@ Safe Travels
 
 Use AI to determine if a route between two cities is safe, weather-wise.
 
+Inputs
+------
+
+The inputs to this tool are:
+* The starting city (e.g. "Crested Butte, CO")
+* The destination city (e.g. "Denver, CO")
+* The date and time of departure or (e.g. "2025-03-08 12:00:00")
+* The date and time of arrival (e.g. "2025-03-08 18:00:00")
+
 Requirements
 ------------
 
