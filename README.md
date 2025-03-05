@@ -17,6 +17,7 @@ or however you set environment variables in your shell:
 OPENAI_API_KEY=your_openai_api_key
 TAVILY_API_KEY=your_tavily_api_key
 LANGSMITH_API_KEY=your_langsmith_api_key
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 You can get these keys by signing up for a free account at the following websites:
