@@ -12,7 +12,7 @@ from routing import derive_route
 
 # Create the agent
 memory = MemorySaver()
-model = ChatOpenAI(model="gpt-4o")
+model = ChatOpenAI(model="gpt-4o", temperature=0.01, seed=42)
 search = TavilySearchResults(max_results=2)
 mapper = derive_route
 danger_accessor = assess_danger
@@ -22,8 +22,6 @@ agent_executor = create_react_agent(model, tools, checkpointer=memory)
 
 thread_id = uuid.uuid4().hex
 config = {"configurable": {"thread_id": thread_id}}
-
-# HumanMessage(content="get the weather forecast at each point along that route, assuming we depart the origin city at 7:00 AM on 2025-03-08.")
 
 for step in agent_executor.stream(
         {"messages": [HumanMessage(content='derive a route from Crested Butte, CO to Denver, CO, '
@@ -36,16 +34,10 @@ for step in agent_executor.stream(
 for step in agent_executor.stream(
         {"messages": [HumanMessage(content='get the weather events at each point along that route, '
                                            'and then assess the danger at each point, '
-                                           'assuming we depart the origin city at 7:00 AM on 2025-03-08.'), ]},
+                                           'with the following schema: '
+                                           '{"temp_c": "number", "wind_kph": "number", "condition": "string", "gust_kph": "number"} '
+                                           'assuming we depart the origin city at 7:00 AM on 2025-03-08.')]},
         config,
         stream_mode="values",
 ):
     step["messages"][-1].pretty_print()
-
-# for step in agent_executor.stream(
-#         {"messages": [HumanMessage(content='asses the danger of each weather value '
-#                                            'from the previous step.')]},
-#         config,
-#         stream_mode="values",
-# ):
-#     step["messages"][-1].pretty_print()
