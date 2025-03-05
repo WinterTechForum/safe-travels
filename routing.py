@@ -2,6 +2,7 @@
 import os
 from typing import Any, List, Tuple
 
+import dateutil
 import polyline
 import requests
 from langchain_core.tools import tool
@@ -26,13 +27,43 @@ def get_lat_long(city_name: str) -> Tuple[float, float]:
     return lat, lng
 
 
-def compute_route(origin: Tuple[float, float], destination: Tuple[float, float]) -> dict[str, Any]:
+def ensure_rfc3339_format(date_str: str) -> str:
+    """
+    Ensure the given date string is in RFC3339 format.
+
+    Args:
+        date_str (str): The date string to validate.
+
+    Returns:
+        str: The date string in RFC3339 format.
+
+    Raises:
+        ValueError: If the date string is not in a valid format.
+    """
+    try:
+        # Try to parse the date string to a datetime object
+        dt = dateutil.parser.parse(date_str)
+
+        # convert the date to UTC
+        dt = dt.astimezone(dateutil.tz.gettz('UTC'))
+
+        # Return the date string in RFC3339 format with a trailing Z to indicate UTC
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    except ValueError:
+        raise ValueError(f"Invalid date string: {date_str}. Ensure it is in RFC3339 format.")
+
+
+def compute_route(origin: Tuple[float, float], destination: Tuple[float, float],
+                  departure_time: str | None = None,
+                  arrival_time: str | None = None) -> dict[str, Any]:
     url = 'https://routes.googleapis.com/directions/v2:computeRoutes'
+
     headers = {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': os.environ['GOOGLE_MAPS_API_KEY'],
         'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
     }
+
     data = {
         "origin": {
             "location": {
@@ -62,6 +93,13 @@ def compute_route(origin: Tuple[float, float], destination: Tuple[float, float])
         "units": "IMPERIAL"
     }
 
+    # ensure departure_time is in RFC3339 format
+
+    if departure_time:
+        data['departureTime'] = ensure_rfc3339_format(departure_time)
+    elif arrival_time:
+        data['arrivalTime'] = ensure_rfc3339_format(arrival_time)
+
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
 
@@ -78,12 +116,13 @@ def pick_equidistant_points(points: List[Tuple[float, float]], n: int = 10) -> L
 
 
 @tool
-def derive_route(city0: str, city1: str) -> List[Tuple[float, float]]:
+def derive_route(city0: str, city1: str, departure_time: str | None = None,
+                 arrival_time: str | None = None) -> List[Tuple[float, float]]:
     """Derive a route between two cities."""
     city0_coords = get_lat_long(city0)
     city1_coords = get_lat_long(city1)
 
-    route = compute_route(city0_coords, city1_coords)
+    route = compute_route(city0_coords, city1_coords, departure_time, arrival_time)
 
     # decode the encodedPolyline from the response
     encodedPolyline = route['routes'][0]['polyline']['encodedPolyline']
