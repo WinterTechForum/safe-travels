@@ -116,18 +116,18 @@ def pick_equidistant_points(points: List[Tuple[float, float]], n: int = 10) -> L
 
 
 @tool
-def derive_route(city0: str, city1: str, departure_time: str | None = None,
+def derive_route(origin: str, destination: str, departure_time: str | None = None,
                  arrival_time: str | None = None) -> List[Tuple[float, float]]:
     """Derive a route between two cities."""
-    city0_coords = get_lat_long(city0)
-    city1_coords = get_lat_long(city1)
+    city0_coords = get_lat_long(origin)
+    city1_coords = get_lat_long(destination)
 
     route = compute_route(city0_coords, city1_coords, departure_time, arrival_time)
 
     # decode the encodedPolyline from the response
-    encodedPolyline = route['routes'][0]['polyline']['encodedPolyline']
+    encoded_polyline = route['routes'][0]['polyline']['encodedPolyline']
 
-    points = polyline.decode(encodedPolyline)
+    points = polyline.decode(encoded_polyline)
 
     return pick_equidistant_points(points)
 
