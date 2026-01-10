@@ -1,9 +1,4 @@
-langchain[openai]
-langchain-community
-langgraph
-# langchain-openai
-tavily-python
-langgraph-checkpoint-sqlite
+fastmcp
 polyline
 requests
 python-dateutil

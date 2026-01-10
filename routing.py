@@ -3,9 +3,7 @@ import os
 from typing import Any, List, Tuple
 
 import dateutil
-import polyline
 import requests
-from langchain_core.tools import tool
 
 
 def get_lat_long(city_name: str) -> Tuple[float, float]:
@@ -115,23 +113,12 @@ def pick_equidistant_points(points: List[Tuple[float, float]], n: int = 10) -> L
     return [points[i] for i in range(0, len(points), step)]
 
 
-@tool
-def derive_route(origin: str, destination: str, departure_time: str | None = None,
-                 arrival_time: str | None = None) -> List[Tuple[float, float]]:
-    """Derive a route between two cities."""
-    city0_coords = get_lat_long(origin)
-    city1_coords = get_lat_long(destination)
-
-    route = compute_route(city0_coords, city1_coords, departure_time, arrival_time)
-
-    # decode the encodedPolyline from the response
-    encoded_polyline = route['routes'][0]['polyline']['encodedPolyline']
-
-    points = polyline.decode(encoded_polyline)
-
-    return pick_equidistant_points(points)
-
-
 if __name__ == '__main__':
-    points = derive_route.run({'city0': 'Crested Butte, CO', 'city1': 'Denver, CO'})
-    print(points)
+    import polyline
+
+    origin_coords = get_lat_long('Crested Butte, CO')
+    dest_coords = get_lat_long('Denver, CO')
+    route = compute_route(origin_coords, dest_coords)
+    encoded_polyline = route['routes'][0]['polyline']['encodedPolyline']
+    points = polyline.decode(encoded_polyline)
+    print(pick_equidistant_points(points))

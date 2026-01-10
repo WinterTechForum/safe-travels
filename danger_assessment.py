@@ -1,7 +1,3 @@
-from typing import Any
-
-from langchain_core.tools import tool
-
 weather_conditions_severity: dict[str, int] = {
     'sunny': 0,
     'cloudy': 0,
@@ -31,29 +27,5 @@ def temperature_severity(temp: float) -> float:
         return (temp - 30) / 10 + 1
 
 
-def wind_severity(kph: int) -> float:
+def wind_severity(kph: float) -> float:
     return kph / 16
-
-
-@tool
-def assess_danger(point: dict[str, Any] | None = None) -> float:
-    """
-    Compute the danger score of a point based on the weather information.
-
-    Args:
-        point (dict[str, Any]): A point on a route to compute the danger score for.
-
-    Returns:
-        float: The danger score of the point.
-    """
-    if point is None:
-        return 0.0
-
-    weather_condition_modifier = weather_conditions_severity.get(point['condition'].lower(), 0.0)
-    temperature_modifier = temperature_severity(point.get('temp_c', 0))
-    wind_modifier = wind_severity(point.get('wind_mph', 0))
-    gust_modifier = wind_severity(point.get('gust_mph', 0))
-
-    max_wind_modifier = max(gust_modifier, wind_modifier)
-
-    return weather_condition_modifier + temperature_modifier + max_wind_modifier
