@@ -1,0 +1,15 @@
+[project]
+name = "safe-travels"
+version = "0.1.0"
+description = "MCP server for assessing weather-related danger on driving routes"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp",
+    "polyline",
+    "requests",
+    "python-dateutil",
+]
+
+[project.scripts]
+safe-travels = "server:mcp.run"

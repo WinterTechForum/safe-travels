@@ -45,12 +45,8 @@ Installation
 ------------
 
 ```bash
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies with uv
+uv sync
 ```
 
 Usage with Claude Desktop
@@ -61,8 +57,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "safe-travels": {
-      "command": "/path/to/safe-travels/.venv/bin/python",
-      "args": ["/path/to/safe-travels/server.py"],
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/safe-travels", "python", "server.py"],
       "env": {
         "GOOGLE_MAPS_API_KEY": "your_key_here"
       }
@@ -71,7 +67,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-**Note:** Use the full path to the venv Python executable, as Claude Desktop has a limited PATH.
+**Note:** Replace `/path/to/safe-travels` with the actual path to this project.
 
 Then restart Claude Desktop and ask questions like:
 - "What's the danger level for driving from Denver to Boulder tomorrow morning?"

@@ -9,14 +9,11 @@ Safe Travels is an MCP (Model Context Protocol) server that exposes tools for de
 ## Running the MCP Server
 
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
-
 # Install dependencies
-pip install -r requirements.txt
+uv sync
 
 # Run the server (for testing - normally launched by MCP client)
-python server.py
+uv run python server.py
 ```
 
 ## Configuring as MCP Server
@@ -43,8 +40,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "safe-travels": {
-      "command": "/path/to/safe-travels/.venv/bin/python",
-      "args": ["/path/to/safe-travels/server.py"],
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/safe-travels", "python", "server.py"],
       "env": {
         "GOOGLE_MAPS_API_KEY": "your_key_here"
       }
@@ -53,7 +50,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-**Note:** Use the full path to the venv Python executable, as Claude Desktop has a limited PATH.
+**Note:** Replace `/path/to/safe-travels` with the actual path to this project.
 
 ## Required Environment Variables
 
