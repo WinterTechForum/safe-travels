@@ -104,6 +104,15 @@ def compute_route(origin: Tuple[float, float], destination: Tuple[float, float],
     return response.json()
 
 
+def get_route_duration_seconds(route_response: dict[str, Any]) -> int:
+    """Extract route duration in seconds from a Google Routes API response.
+
+    The API returns duration as a string like "3600s".
+    """
+    duration_str = route_response["routes"][0]["duration"]
+    return int(duration_str.rstrip("s"))
+
+
 def pick_equidistant_points(points: List[Tuple[float, float]], n: int = 10) -> List[Tuple[float, float]]:
     """Pick n equidistant points from a list of points."""
     if n <= 0:

@@ -10,7 +10,7 @@ Tools
 Combined tool that handles the full workflow in a single call:
 - Takes origin, destination, and optional departure/arrival time
 - Derives the route and gets waypoints via Google Maps API
-- Fetches current weather for each waypoint via Open-Meteo API
+- Fetches forecast weather for each waypoint at its expected arrival time via Open-Meteo API
 - Computes danger scores for each point
 - Returns overall assessment with status (SAFE, MODERATE, HAZARDOUS, EXTREME)
 
@@ -40,6 +40,16 @@ Installation
 ```bash
 # Install dependencies with uv
 uv sync
+
+# Install dev dependencies (for testing)
+uv sync --extra dev
+```
+
+Testing
+-------
+
+```bash
+uv run pytest
 ```
 
 Usage with Claude Desktop

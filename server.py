@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Safe Travels MCP Server - Exposes route derivation and danger assessment tools."""
 
+from datetime import datetime, timedelta, timezone
+
 from fastmcp import FastMCP
 
 from danger_assessment import (
@@ -8,8 +10,14 @@ from danger_assessment import (
     weather_conditions_severity,
     wind_severity,
 )
-from routing import compute_route, get_lat_long, pick_equidistant_points
+from routing import (
+    compute_route,
+    get_lat_long,
+    get_route_duration_seconds,
+    pick_equidistant_points,
+)
 
+import dateutil.parser
 import polyline
 import requests
 
@@ -34,35 +42,57 @@ def weather_code_to_condition(code: int) -> str:
 
 
 def fetch_weather_for_waypoints(
-    waypoints: list[tuple[float, float]],
+    waypoints: list[tuple[float, float, datetime]],
 ) -> list[dict]:
-    """Fetch current weather for multiple waypoints using Open-Meteo API."""
+    """Fetch forecast weather for waypoints at their expected arrival times.
+
+    Args:
+        waypoints: List of (lat, lon, arrival_time) tuples
+    """
     lats = ",".join(str(wp[0]) for wp in waypoints)
     lons = ",".join(str(wp[1]) for wp in waypoints)
+
+    # Determine time range needed for forecast
+    timestamps = [wp[2] for wp in waypoints]
+    min_time = min(timestamps)
+    max_time = max(timestamps)
+
+    # Format for Open-Meteo API (ISO8601)
+    start_hour = min_time.strftime("%Y-%m-%dT%H:00")
+    end_hour = (max_time + timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
 
     url = (
         f"https://api.open-meteo.com/v1/forecast?"
         f"latitude={lats}&longitude={lons}"
-        f"&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code"
+        f"&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code"
+        f"&start_hour={start_hour}&end_hour={end_hour}"
     )
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
 
     # Handle single vs multiple waypoints (API returns dict vs list)
-    if isinstance(data, dict) and "current" in data:
+    if isinstance(data, dict) and "hourly" in data:
         data = [data]
 
     results = []
-    for i, wp in enumerate(waypoints):
-        current = data[i]["current"]
+    for i, (lat, lon, arrival_time) in enumerate(waypoints):
+        hourly = data[i]["hourly"]
+        # Find the closest hour in the forecast
+        times = [datetime.fromisoformat(t) for t in hourly["time"]]
+        closest_idx = min(
+            range(len(times)),
+            key=lambda j: abs((times[j] - arrival_time.replace(tzinfo=None)).total_seconds())
+        )
+
         results.append({
-            "lat": wp[0],
-            "lon": wp[1],
-            "temp_c": current["temperature_2m"],
-            "wind_kph": current["wind_speed_10m"],
-            "gust_kph": current["wind_gusts_10m"],
-            "condition": weather_code_to_condition(current["weather_code"]),
+            "lat": lat,
+            "lon": lon,
+            "arrival_time": arrival_time.isoformat(),
+            "temp_c": hourly["temperature_2m"][closest_idx],
+            "wind_kph": hourly["wind_speed_10m"][closest_idx],
+            "gust_kph": hourly["wind_gusts_10m"][closest_idx],
+            "condition": weather_code_to_condition(hourly["weather_code"][closest_idx]),
         })
 
     return results
@@ -128,7 +158,8 @@ def assess_route_danger(
     Compute the danger assessment for an entire route, including weather conditions.
 
     This combines route derivation, weather fetching, and danger assessment into
-    a single operation.
+    a single operation. Weather forecasts are fetched for each waypoint's expected
+    arrival time based on departure time and route duration.
 
     Args:
         origin: Starting city (e.g. "Grayson, GA")
@@ -140,7 +171,9 @@ def assess_route_danger(
         Dictionary containing:
         - origin: Starting location
         - destination: Ending location
-        - waypoints: List of waypoint assessments with lat, lon, weather, and danger score
+        - departure_time: When the trip starts
+        - arrival_time: When the trip ends
+        - waypoints: List of waypoint assessments with lat, lon, arrival_time, weather, and danger score
         - average_danger: Average danger score across all waypoints
         - max_danger: Maximum danger score encountered
         - status: Overall safety status (SAFE, MODERATE, HAZARDOUS, EXTREME)
@@ -151,12 +184,38 @@ def assess_route_danger(
     route = compute_route(origin_coords, destination_coords, departure_time, arrival_time)
     encoded_polyline = route["routes"][0]["polyline"]["encodedPolyline"]
     points = polyline.decode(encoded_polyline)
-    waypoints = pick_equidistant_points(points)
+    waypoint_coords = pick_equidistant_points(points)
 
-    # Step 2: Fetch weather for all waypoints
-    weather_data = fetch_weather_for_waypoints(waypoints)
+    # Step 2: Calculate departure time and waypoint arrival times
+    duration_seconds = get_route_duration_seconds(route)
 
-    # Step 3: Assess danger at each waypoint
+    if departure_time:
+        start_time = dateutil.parser.parse(departure_time)
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=timezone.utc)
+    elif arrival_time:
+        end_time = dateutil.parser.parse(arrival_time)
+        if end_time.tzinfo is None:
+            end_time = end_time.replace(tzinfo=timezone.utc)
+        start_time = end_time - timedelta(seconds=duration_seconds)
+    else:
+        start_time = datetime.now(timezone.utc)
+
+    end_time = start_time + timedelta(seconds=duration_seconds)
+
+    # Calculate arrival time for each waypoint (linear interpolation)
+    num_waypoints = len(waypoint_coords)
+    waypoints_with_times = []
+    for i, (lat, lon) in enumerate(waypoint_coords):
+        # Fraction of trip completed at this waypoint
+        fraction = i / (num_waypoints - 1) if num_waypoints > 1 else 0
+        waypoint_time = start_time + timedelta(seconds=duration_seconds * fraction)
+        waypoints_with_times.append((lat, lon, waypoint_time))
+
+    # Step 3: Fetch weather for all waypoints at their arrival times
+    weather_data = fetch_weather_for_waypoints(waypoints_with_times)
+
+    # Step 4: Assess danger at each waypoint
     waypoint_results = []
     danger_scores = []
 
@@ -172,6 +231,7 @@ def assess_route_danger(
         waypoint_results.append({
             "lat": wd["lat"],
             "lon": wd["lon"],
+            "arrival_time": wd["arrival_time"],
             "temp_c": wd["temp_c"],
             "wind_kph": wd["wind_kph"],
             "gust_kph": wd["gust_kph"],
@@ -179,7 +239,7 @@ def assess_route_danger(
             "danger_score": round(danger_score, 2),
         })
 
-    # Step 4: Compute overall assessment
+    # Step 5: Compute overall assessment
     avg_danger = sum(danger_scores) / len(danger_scores)
     max_danger = max(danger_scores)
 
@@ -195,6 +255,9 @@ def assess_route_danger(
     return {
         "origin": origin,
         "destination": destination,
+        "departure_time": start_time.isoformat(),
+        "arrival_time": end_time.isoformat(),
+        "duration_minutes": round(duration_seconds / 60),
         "waypoints": waypoint_results,
         "average_danger": round(avg_danger, 2),
         "max_danger": round(max_danger, 2),

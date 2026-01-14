@@ -11,5 +11,11 @@ dependencies = [
     "python-dateutil",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-mock",
+]
+
 [project.scripts]
 safe-travels = "server:mcp.run"
