@@ -177,12 +177,12 @@ def assess_route_danger(
     danger_scores = []
 
     for wd in weather_data:
-        weather_modifier = weather_conditions_severity.get(wd["condition"].lower(), 0.0)
-        temp_modifier = temperature_severity(wd["temp_c"])
-        wind_modifier = wind_severity(wd["wind_kph"])
-        gust_modifier = wind_severity(wd["gust_kph"])
-        max_wind = max(wind_modifier, gust_modifier)
-        danger_score = weather_modifier + temp_modifier + max_wind
+        danger_score = assess_danger(
+            temp_c=wd["temp_c"],
+            wind_kph=wd["wind_kph"],
+            condition=wd["condition"],
+            gust_kph=wd["gust_kph"],
+        )
 
         danger_scores.append(danger_score)
         waypoint_results.append({
