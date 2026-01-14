@@ -67,6 +67,23 @@ def fetch_weather_for_waypoints(
 
     return results
 
+def _compute_danger_score(
+    temp_c: float,
+    wind_kph: float,
+    condition: str,
+    gust_kph: float = 0.0,
+) -> float:
+    """Compute danger score from weather conditions."""
+    weather_modifier = weather_conditions_severity.get(condition.lower(), 0.0)
+    temp_modifier = temperature_severity(temp_c)
+    wind_modifier = wind_severity(wind_kph)
+    gust_modifier = wind_severity(gust_kph)
+
+    max_wind_modifier = max(gust_modifier, wind_modifier)
+
+    return weather_modifier + temp_modifier + max_wind_modifier
+
+
 mcp = FastMCP("safe-travels")
 
 
@@ -98,39 +115,6 @@ def derive_route(
     points = polyline.decode(encoded_polyline)
 
     return pick_equidistant_points(points)
-
-
-@mcp.tool
-def assess_danger(
-    temp_c: float,
-    wind_kph: float,
-    condition: str,
-    gust_kph: float = 0.0,
-) -> float:
-    """
-    Compute the danger score for weather conditions at a point.
-
-    Args:
-        temp_c: Temperature in Celsius
-        wind_kph: Wind speed in kilometers per hour
-        condition: Weather condition (e.g. "sunny", "rainy", "snowy", "foggy", "blizzard")
-        gust_kph: Wind gust speed in kilometers per hour (optional)
-
-    Returns:
-        Danger score as a float. Higher values indicate more dangerous conditions.
-        - 0-2: Safe conditions
-        - 2-5: Moderate caution advised
-        - 5-10: Hazardous conditions
-        - 10+: Extremely dangerous
-    """
-    weather_modifier = weather_conditions_severity.get(condition.lower(), 0.0)
-    temp_modifier = temperature_severity(temp_c)
-    wind_modifier = wind_severity(wind_kph)
-    gust_modifier = wind_severity(gust_kph)
-
-    max_wind_modifier = max(gust_modifier, wind_modifier)
-
-    return weather_modifier + temp_modifier + max_wind_modifier
 
 
 @mcp.tool
@@ -177,7 +161,7 @@ def assess_route_danger(
     danger_scores = []
 
     for wd in weather_data:
-        danger_score = assess_danger(
+        danger_score = _compute_danger_score(
             temp_c=wd["temp_c"],
             wind_kph=wd["wind_kph"],
             condition=wd["condition"],

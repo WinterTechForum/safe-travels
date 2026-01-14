@@ -19,13 +19,6 @@ Example: "Compute the danger of traveling from Grayson, GA to Dahlonega, GA on J
 ### derive_route
 Takes origin/destination cities and optional departure/arrival times. Returns a list of (lat, long) waypoints along the route.
 
-### assess_danger
-Takes weather conditions (temp_c, wind_kph, condition, gust_kph) and returns a danger score:
-- 0-2: Safe
-- 2-5: Moderate caution
-- 5-10: Hazardous
-- 10+: Extremely dangerous
-
 Requirements
 ------------
 

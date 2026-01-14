@@ -61,13 +61,6 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ### derive_route
 Takes origin/destination cities and optional departure/arrival times. Returns a list of (lat, long) waypoints along the route.
 
-### assess_danger
-Takes weather conditions (temp_c, wind_kph, condition, gust_kph) and returns a danger score:
-- 0-2: Safe
-- 2-5: Moderate caution
-- 5-10: Hazardous
-- 10+: Extremely dangerous
-
 ### assess_route_danger
 Combined tool that handles the full workflow in a single call:
 - Takes origin, destination, and optional departure/arrival time
@@ -80,6 +73,6 @@ Example query: "Compute the danger of traveling from Grayson, GA to Dahlonega, G
 
 ## Architecture
 
-- **`server.py`** - FastMCP server exposing the three tools, plus weather fetching logic
+- **`server.py`** - FastMCP server exposing the two tools, plus weather fetching logic
 - **`routing.py`** - Google Maps API integration for geocoding and route computation
 - **`danger_assessment.py`** - Weather severity scoring functions
