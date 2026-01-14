@@ -54,21 +54,21 @@ class TestComputeDangerScore:
         score = _compute_danger_score(
             temp_c=20.0, wind_kph=10.0, condition='sunny', gust_kph=15.0
         )
-        # temp: 0 (20C is normal), wind: max(10/16, 15/16) = 0.9375, condition: 0
+        # temp: 0, wind: 0.9375, condition: 0, precip: 0, vis: 0, ice: 0
         assert score == pytest.approx(0.9375)
 
     def test_cold_and_snowy(self):
         score = _compute_danger_score(
             temp_c=-10.0, wind_kph=32.0, condition='snowy', gust_kph=40.0
         )
-        # temp: 1 + 10/10 = 2, wind: max(32/16, 40/16) = 2.5, condition: 3
-        assert score == pytest.approx(7.5)
+        # temp: 2, wind: 2.5, condition: 3, precip: 0, vis: 0, ice: 1 (very cold)
+        assert score == pytest.approx(8.5)
 
     def test_hot_and_stormy(self):
         score = _compute_danger_score(
             temp_c=40.0, wind_kph=80.0, condition='stormy', gust_kph=100.0
         )
-        # temp: 1 + 10/10 = 2, wind: max(80/16, 100/16) = 6.25, condition: 6
+        # temp: 2, wind: 6.25, condition: 6, precip: 0, vis: 0, ice: 0 (too hot)
         assert score == pytest.approx(14.25)
 
     def test_gust_takes_precedence_over_wind(self):
@@ -94,6 +94,13 @@ class TestFetchWeatherForWaypoints:
                 'wind_speed_10m': [10.0, 12.0, 14.0],
                 'wind_gusts_10m': [15.0, 18.0, 21.0],
                 'weather_code': [3, 3, 61],
+                'precipitation': [0.0, 0.0, 0.5],
+                'rain': [0.0, 0.0, 0.5],
+                'snowfall': [0.0, 0.0, 0.0],
+                'snow_depth': [0.0, 0.0, 0.0],
+                'visibility': [10000.0, 10000.0, 8000.0],
+                'soil_temperature_0cm': [4.0, 5.0, 6.0],
+                'dew_point_2m': [2.0, 3.0, 4.0],
             }
         }
         mock_response.raise_for_status = mocker.Mock()
@@ -119,6 +126,13 @@ class TestFetchWeatherForWaypoints:
                     'wind_speed_10m': [10.0, 12.0],
                     'wind_gusts_10m': [15.0, 18.0],
                     'weather_code': [3, 3],
+                    'precipitation': [0.0, 0.0],
+                    'rain': [0.0, 0.0],
+                    'snowfall': [0.0, 0.0],
+                    'snow_depth': [0.0, 0.0],
+                    'visibility': [10000.0, 10000.0],
+                    'soil_temperature_0cm': [4.0, 5.0],
+                    'dew_point_2m': [2.0, 3.0],
                 }
             },
             {
@@ -128,6 +142,13 @@ class TestFetchWeatherForWaypoints:
                     'wind_speed_10m': [8.0, 10.0],
                     'wind_gusts_10m': [12.0, 15.0],
                     'weather_code': [71, 71],
+                    'precipitation': [0.0, 0.0],
+                    'rain': [0.0, 0.0],
+                    'snowfall': [0.5, 0.5],
+                    'snow_depth': [0.0, 0.0],
+                    'visibility': [5000.0, 5000.0],
+                    'soil_temperature_0cm': [3.0, 4.0],
+                    'dew_point_2m': [1.0, 2.0],
                 }
             },
         ]
@@ -154,6 +175,13 @@ class TestFetchWeatherForWaypoints:
                 'wind_speed_10m': [10.0, 10.0, 10.0],
                 'wind_gusts_10m': [15.0, 15.0, 15.0],
                 'weather_code': [0, 0, 0],
+                'precipitation': [0.0, 0.0, 0.0],
+                'rain': [0.0, 0.0, 0.0],
+                'snowfall': [0.0, 0.0, 0.0],
+                'snow_depth': [0.0, 0.0, 0.0],
+                'visibility': [10000.0, 10000.0, 10000.0],
+                'soil_temperature_0cm': [4.0, 8.0, 12.0],
+                'dew_point_2m': [2.0, 6.0, 10.0],
             }
         }
         mock_response.raise_for_status = mocker.Mock()
@@ -174,6 +202,13 @@ class TestFetchWeatherForWaypoints:
                 'wind_speed_10m': [10.0],
                 'wind_gusts_10m': [15.0],
                 'weather_code': [0],
+                'precipitation': [0.0],
+                'rain': [0.0],
+                'snowfall': [0.0],
+                'snow_depth': [0.0],
+                'visibility': [10000.0],
+                'soil_temperature_0cm': [4.0],
+                'dew_point_2m': [2.0],
             }
         }
         mock_response.raise_for_status = mocker.Mock()
@@ -242,6 +277,12 @@ class TestAssessRouteDanger:
                 'wind_kph': 10.0,
                 'gust_kph': 15.0,
                 'condition': 'cloudy',
+                'rain_mm': 0.0,
+                'snowfall_cm': 0.0,
+                'visibility_m': 10000.0,
+                'snow_depth_m': 0.0,
+                'soil_temp_c': 4.0,
+                'dew_point_c': 2.0,
             },
             {
                 'lat': 34.10,
@@ -251,6 +292,12 @@ class TestAssessRouteDanger:
                 'wind_kph': 12.0,
                 'gust_kph': 18.0,
                 'condition': 'cloudy',
+                'rain_mm': 0.0,
+                'snowfall_cm': 0.0,
+                'visibility_m': 10000.0,
+                'snow_depth_m': 0.0,
+                'soil_temp_c': 3.0,
+                'dew_point_c': 1.0,
             },
             {
                 'lat': 34.30,
@@ -260,6 +307,12 @@ class TestAssessRouteDanger:
                 'wind_kph': 15.0,
                 'gust_kph': 20.0,
                 'condition': 'snowy',
+                'rain_mm': 0.0,
+                'snowfall_cm': 0.5,
+                'visibility_m': 5000.0,
+                'snow_depth_m': 0.0,
+                'soil_temp_c': 2.0,
+                'dew_point_c': 0.0,
             },
         ]
         mocker.patch('server.fetch_weather_for_waypoints', return_value=mock_weather)
@@ -321,6 +374,12 @@ class TestAssessRouteDanger:
                     'wind_kph': 5.0,
                     'gust_kph': 8.0,
                     'condition': 'sunny',
+                    'rain_mm': 0.0,
+                    'snowfall_cm': 0.0,
+                    'visibility_m': 10000.0,
+                    'snow_depth_m': 0.0,
+                    'soil_temp_c': 18.0,
+                    'dew_point_c': 10.0,
                 }
             ],
         )
@@ -373,6 +432,12 @@ class TestAssessRouteDanger:
                     'wind_kph': 5.0,
                     'gust_kph': 8.0,
                     'condition': 'sunny',
+                    'rain_mm': 0.0,
+                    'snowfall_cm': 0.0,
+                    'visibility_m': 10000.0,
+                    'snow_depth_m': 0.0,
+                    'soil_temp_c': 18.0,
+                    'dew_point_c': 10.0,
                 }
             ],
         )

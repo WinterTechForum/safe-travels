@@ -65,8 +65,14 @@ Takes origin/destination cities and optional departure/arrival times. Returns a 
 Combined tool that handles the full workflow in a single call:
 - Takes origin, destination, and optional departure/arrival time
 - Derives the route and gets waypoints
-- Fetches current weather for each waypoint (via Open-Meteo API)
-- Computes danger scores for each point
+- Fetches forecast weather for each waypoint at its expected arrival time (via Open-Meteo API)
+- Computes danger scores based on multiple factors:
+  - Temperature extremes (cold/heat)
+  - Wind speed and gusts
+  - Weather conditions (rain, snow, fog, storms)
+  - Precipitation intensity (rainfall mm/hr, snowfall cm/hr)
+  - Visibility distance
+  - Black ice risk (based on air temp, soil temp, and humidity)
 - Returns overall assessment with status (SAFE, MODERATE, HAZARDOUS, EXTREME)
 
 Example query: "Compute the danger of traveling from Grayson, GA to Dahlonega, GA on January 23, 2026, leaving at 07:00 AM"

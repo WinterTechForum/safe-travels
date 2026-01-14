@@ -9,7 +9,10 @@ import requests
 from fastmcp import FastMCP
 
 from danger_assessment import (
+    black_ice_risk,
+    precipitation_severity,
     temperature_severity,
+    visibility_severity,
     weather_conditions_severity,
     wind_severity,
 )
@@ -63,7 +66,9 @@ def fetch_weather_for_waypoints(
     url = (
         f'https://api.open-meteo.com/v1/forecast?'
         f'latitude={lats}&longitude={lons}'
-        f'&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code'
+        f'&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code,'
+        f'precipitation,rain,snowfall,snow_depth,visibility,'
+        f'soil_temperature_0cm,dew_point_2m'
         f'&start_hour={start_hour}&end_hour={end_hour}'
     )
     response = requests.get(url)
@@ -97,6 +102,13 @@ def fetch_weather_for_waypoints(
                 'condition': weather_code_to_condition(
                     hourly['weather_code'][closest_idx]
                 ),
+                'precipitation_mm': hourly['precipitation'][closest_idx] or 0.0,
+                'rain_mm': hourly['rain'][closest_idx] or 0.0,
+                'snowfall_cm': hourly['snowfall'][closest_idx] or 0.0,
+                'snow_depth_m': hourly['snow_depth'][closest_idx] or 0.0,
+                'visibility_m': hourly['visibility'][closest_idx] or 10000.0,
+                'soil_temp_c': hourly['soil_temperature_0cm'][closest_idx],
+                'dew_point_c': hourly['dew_point_2m'][closest_idx],
             }
         )
 
@@ -108,16 +120,31 @@ def _compute_danger_score(
     wind_kph: float,
     condition: str,
     gust_kph: float = 0.0,
+    rain_mm: float = 0.0,
+    snowfall_cm: float = 0.0,
+    visibility_m: float = 10000.0,
+    soil_temp_c: float | None = None,
+    dew_point_c: float | None = None,
 ) -> float:
     """Compute danger score from weather conditions."""
     weather_modifier = weather_conditions_severity.get(condition.lower(), 0.0)
     temp_modifier = temperature_severity(temp_c)
     wind_modifier = wind_severity(wind_kph)
     gust_modifier = wind_severity(gust_kph)
+    precip_modifier = precipitation_severity(rain_mm, snowfall_cm)
+    vis_modifier = visibility_severity(visibility_m)
+    ice_modifier = black_ice_risk(temp_c, soil_temp_c, dew_point_c)
 
     max_wind_modifier = max(gust_modifier, wind_modifier)
 
-    return weather_modifier + temp_modifier + max_wind_modifier
+    return (
+        weather_modifier
+        + temp_modifier
+        + max_wind_modifier
+        + precip_modifier
+        + vis_modifier
+        + ice_modifier
+    )
 
 
 mcp = FastMCP('safe-travels')
@@ -237,6 +264,11 @@ def assess_route_danger(
             wind_kph=wd['wind_kph'],
             condition=wd['condition'],
             gust_kph=wd['gust_kph'],
+            rain_mm=wd['rain_mm'],
+            snowfall_cm=wd['snowfall_cm'],
+            visibility_m=wd['visibility_m'],
+            soil_temp_c=wd['soil_temp_c'],
+            dew_point_c=wd['dew_point_c'],
         )
 
         danger_scores.append(danger_score)
@@ -249,6 +281,10 @@ def assess_route_danger(
                 'wind_kph': wd['wind_kph'],
                 'gust_kph': wd['gust_kph'],
                 'condition': wd['condition'],
+                'rain_mm': wd['rain_mm'],
+                'snowfall_cm': wd['snowfall_cm'],
+                'visibility_m': wd['visibility_m'],
+                'snow_depth_m': wd['snow_depth_m'],
                 'danger_score': round(danger_score, 2),
             }
         )

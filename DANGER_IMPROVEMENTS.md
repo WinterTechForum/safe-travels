@@ -10,9 +10,9 @@
 - [x] Fetch forecast for each segment's expected arrival time
 
 ## Road-relevant conditions
-- [ ] Precipitation accumulation (total snowfall, rainfall amounts)
-- [ ] Visibility distance (fog density, heavy rain visibility impact)
-- [ ] Road surface temperature vs air temp (black ice risk detection)
+- [x] Precipitation accumulation (total snowfall, rainfall amounts)
+- [x] Visibility distance (fog density, heavy rain visibility impact)
+- [x] Road surface temperature vs air temp (black ice risk detection)
 - [ ] Recent precipitation history (wet/icy roads from previous storms)
 
 ## Terrain awareness
