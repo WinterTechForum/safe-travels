@@ -13,21 +13,27 @@ class TestWeatherConditionsSeverity:
     """Tests for the weather_conditions_severity mapping."""
 
     def test_safe_conditions_have_zero_severity(self):
-        safe_conditions = ["sunny", "cloudy", "overcast", "partly cloudy", "partly sunny"]
+        safe_conditions = [
+            'sunny',
+            'cloudy',
+            'overcast',
+            'partly cloudy',
+            'partly sunny',
+        ]
         for condition in safe_conditions:
             assert weather_conditions_severity[condition] == 0
 
     def test_rainy_has_moderate_severity(self):
-        assert weather_conditions_severity["rainy"] == 2
+        assert weather_conditions_severity['rainy'] == 2
 
     def test_snowy_has_higher_severity(self):
-        assert weather_conditions_severity["snowy"] == 3
+        assert weather_conditions_severity['snowy'] == 3
 
     def test_foggy_severity(self):
-        assert weather_conditions_severity["foggy"] == 4
+        assert weather_conditions_severity['foggy'] == 4
 
     def test_severe_conditions_have_max_severity(self):
-        severe_conditions = ["tornado", "hurricane", "blizzard"]
+        severe_conditions = ['tornado', 'hurricane', 'blizzard']
         for condition in severe_conditions:
             assert weather_conditions_severity[condition] == 10
 

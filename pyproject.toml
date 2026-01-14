@@ -19,3 +19,7 @@ dev = [
 
 [project.scripts]
 safe-travels = "server:mcp.run"
+
+[tool.ruff.format]
+quote-style = "single"
+

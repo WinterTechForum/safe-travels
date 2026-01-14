@@ -25,20 +25,20 @@ import requests
 def weather_code_to_condition(code: int) -> str:
     """Map Open-Meteo weather codes to condition strings."""
     if code in [0, 1]:
-        return "sunny"
+        return 'sunny'
     if code in [2, 3]:
-        return "cloudy"
+        return 'cloudy'
     if code in [45, 48]:
-        return "foggy"
+        return 'foggy'
     if code in [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82]:
-        return "rainy"
+        return 'rainy'
     if code in [71, 73, 75, 77, 85, 86]:
-        return "snowy"
+        return 'snowy'
     if code == 95:
-        return "stormy"
+        return 'stormy'
     if code in [96, 99]:
-        return "hail"
-    return "cloudy"
+        return 'hail'
+    return 'cloudy'
 
 
 def fetch_weather_for_waypoints(
@@ -49,8 +49,8 @@ def fetch_weather_for_waypoints(
     Args:
         waypoints: List of (lat, lon, arrival_time) tuples
     """
-    lats = ",".join(str(wp[0]) for wp in waypoints)
-    lons = ",".join(str(wp[1]) for wp in waypoints)
+    lats = ','.join(str(wp[0]) for wp in waypoints)
+    lons = ','.join(str(wp[1]) for wp in waypoints)
 
     # Determine time range needed for forecast
     timestamps = [wp[2] for wp in waypoints]
@@ -58,44 +58,51 @@ def fetch_weather_for_waypoints(
     max_time = max(timestamps)
 
     # Format for Open-Meteo API (ISO8601)
-    start_hour = min_time.strftime("%Y-%m-%dT%H:00")
-    end_hour = (max_time + timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
+    start_hour = min_time.strftime('%Y-%m-%dT%H:00')
+    end_hour = (max_time + timedelta(hours=1)).strftime('%Y-%m-%dT%H:00')
 
     url = (
-        f"https://api.open-meteo.com/v1/forecast?"
-        f"latitude={lats}&longitude={lons}"
-        f"&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code"
-        f"&start_hour={start_hour}&end_hour={end_hour}"
+        f'https://api.open-meteo.com/v1/forecast?'
+        f'latitude={lats}&longitude={lons}'
+        f'&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code'
+        f'&start_hour={start_hour}&end_hour={end_hour}'
     )
     response = requests.get(url)
     response.raise_for_status()
     data = response.json()
 
     # Handle single vs multiple waypoints (API returns dict vs list)
-    if isinstance(data, dict) and "hourly" in data:
+    if isinstance(data, dict) and 'hourly' in data:
         data = [data]
 
     results = []
     for i, (lat, lon, arrival_time) in enumerate(waypoints):
-        hourly = data[i]["hourly"]
+        hourly = data[i]['hourly']
         # Find the closest hour in the forecast
-        times = [datetime.fromisoformat(t) for t in hourly["time"]]
+        times = [datetime.fromisoformat(t) for t in hourly['time']]
         closest_idx = min(
             range(len(times)),
-            key=lambda j: abs((times[j] - arrival_time.replace(tzinfo=None)).total_seconds())
+            key=lambda j: abs(
+                (times[j] - arrival_time.replace(tzinfo=None)).total_seconds()
+            ),
         )
 
-        results.append({
-            "lat": lat,
-            "lon": lon,
-            "arrival_time": arrival_time.isoformat(),
-            "temp_c": hourly["temperature_2m"][closest_idx],
-            "wind_kph": hourly["wind_speed_10m"][closest_idx],
-            "gust_kph": hourly["wind_gusts_10m"][closest_idx],
-            "condition": weather_code_to_condition(hourly["weather_code"][closest_idx]),
-        })
+        results.append(
+            {
+                'lat': lat,
+                'lon': lon,
+                'arrival_time': arrival_time.isoformat(),
+                'temp_c': hourly['temperature_2m'][closest_idx],
+                'wind_kph': hourly['wind_speed_10m'][closest_idx],
+                'gust_kph': hourly['wind_gusts_10m'][closest_idx],
+                'condition': weather_code_to_condition(
+                    hourly['weather_code'][closest_idx]
+                ),
+            }
+        )
 
     return results
+
 
 def _compute_danger_score(
     temp_c: float,
@@ -114,7 +121,7 @@ def _compute_danger_score(
     return weather_modifier + temp_modifier + max_wind_modifier
 
 
-mcp = FastMCP("safe-travels")
+mcp = FastMCP('safe-travels')
 
 
 @mcp.tool
@@ -139,9 +146,11 @@ def derive_route(
     origin_coords = get_lat_long(origin)
     destination_coords = get_lat_long(destination)
 
-    route = compute_route(origin_coords, destination_coords, departure_time, arrival_time)
+    route = compute_route(
+        origin_coords, destination_coords, departure_time, arrival_time
+    )
 
-    encoded_polyline = route["routes"][0]["polyline"]["encodedPolyline"]
+    encoded_polyline = route['routes'][0]['polyline']['encodedPolyline']
     points = polyline.decode(encoded_polyline)
 
     return pick_equidistant_points(points)
@@ -181,8 +190,10 @@ def assess_route_danger(
     # Step 1: Derive the route
     origin_coords = get_lat_long(origin)
     destination_coords = get_lat_long(destination)
-    route = compute_route(origin_coords, destination_coords, departure_time, arrival_time)
-    encoded_polyline = route["routes"][0]["polyline"]["encodedPolyline"]
+    route = compute_route(
+        origin_coords, destination_coords, departure_time, arrival_time
+    )
+    encoded_polyline = route['routes'][0]['polyline']['encodedPolyline']
     points = polyline.decode(encoded_polyline)
     waypoint_coords = pick_equidistant_points(points)
 
@@ -221,49 +232,51 @@ def assess_route_danger(
 
     for wd in weather_data:
         danger_score = _compute_danger_score(
-            temp_c=wd["temp_c"],
-            wind_kph=wd["wind_kph"],
-            condition=wd["condition"],
-            gust_kph=wd["gust_kph"],
+            temp_c=wd['temp_c'],
+            wind_kph=wd['wind_kph'],
+            condition=wd['condition'],
+            gust_kph=wd['gust_kph'],
         )
 
         danger_scores.append(danger_score)
-        waypoint_results.append({
-            "lat": wd["lat"],
-            "lon": wd["lon"],
-            "arrival_time": wd["arrival_time"],
-            "temp_c": wd["temp_c"],
-            "wind_kph": wd["wind_kph"],
-            "gust_kph": wd["gust_kph"],
-            "condition": wd["condition"],
-            "danger_score": round(danger_score, 2),
-        })
+        waypoint_results.append(
+            {
+                'lat': wd['lat'],
+                'lon': wd['lon'],
+                'arrival_time': wd['arrival_time'],
+                'temp_c': wd['temp_c'],
+                'wind_kph': wd['wind_kph'],
+                'gust_kph': wd['gust_kph'],
+                'condition': wd['condition'],
+                'danger_score': round(danger_score, 2),
+            }
+        )
 
     # Step 5: Compute overall assessment
     avg_danger = sum(danger_scores) / len(danger_scores)
     max_danger = max(danger_scores)
 
     if max_danger < 2:
-        status = "SAFE"
+        status = 'SAFE'
     elif max_danger < 5:
-        status = "MODERATE"
+        status = 'MODERATE'
     elif max_danger < 10:
-        status = "HAZARDOUS"
+        status = 'HAZARDOUS'
     else:
-        status = "EXTREME"
+        status = 'EXTREME'
 
     return {
-        "origin": origin,
-        "destination": destination,
-        "departure_time": start_time.isoformat(),
-        "arrival_time": end_time.isoformat(),
-        "duration_minutes": round(duration_seconds / 60),
-        "waypoints": waypoint_results,
-        "average_danger": round(avg_danger, 2),
-        "max_danger": round(max_danger, 2),
-        "status": status,
+        'origin': origin,
+        'destination': destination,
+        'departure_time': start_time.isoformat(),
+        'arrival_time': end_time.isoformat(),
+        'duration_minutes': round(duration_seconds / 60),
+        'waypoints': waypoint_results,
+        'average_danger': round(avg_danger, 2),
+        'max_danger': round(max_danger, 2),
+        'status': status,
     }
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     mcp.run()

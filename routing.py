@@ -8,16 +8,13 @@ import requests
 
 def get_lat_long(city_name: str) -> Tuple[float, float]:
     url = 'https://maps.googleapis.com/maps/api/geocode/json'
-    params = {
-        'address': city_name,
-        'key': os.environ['GOOGLE_MAPS_API_KEY']
-    }
+    params = {'address': city_name, 'key': os.environ['GOOGLE_MAPS_API_KEY']}
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
 
     if not data['results']:
-        raise ValueError(f"No results found for city: {city_name}")
+        raise ValueError(f'No results found for city: {city_name}')
 
     lat = data['results'][0]['geometry']['location']['lat']
     lng = data['results'][0]['geometry']['location']['lng']
@@ -48,47 +45,44 @@ def ensure_rfc3339_format(date_str: str) -> str:
         # Return the date string in RFC3339 format with a trailing Z to indicate UTC
         return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
     except ValueError:
-        raise ValueError(f"Invalid date string: {date_str}. Ensure it is in RFC3339 format.")
+        raise ValueError(
+            f'Invalid date string: {date_str}. Ensure it is in RFC3339 format.'
+        )
 
 
-def compute_route(origin: Tuple[float, float], destination: Tuple[float, float],
-                  departure_time: str | None = None,
-                  arrival_time: str | None = None) -> dict[str, Any]:
+def compute_route(
+    origin: Tuple[float, float],
+    destination: Tuple[float, float],
+    departure_time: str | None = None,
+    arrival_time: str | None = None,
+) -> dict[str, Any]:
     url = 'https://routes.googleapis.com/directions/v2:computeRoutes'
 
     headers = {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': os.environ['GOOGLE_MAPS_API_KEY'],
-        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
     }
 
     data = {
-        "origin": {
-            "location": {
-                "latLng": {
-                    "latitude": origin[0],
-                    "longitude": origin[1]
-                }
+        'origin': {
+            'location': {'latLng': {'latitude': origin[0], 'longitude': origin[1]}}
+        },
+        'destination': {
+            'location': {
+                'latLng': {'latitude': destination[0], 'longitude': destination[1]}
             }
         },
-        "destination": {
-            "location": {
-                "latLng": {
-                    "latitude": destination[0],
-                    "longitude": destination[1]
-                }
-            }
+        'travelMode': 'DRIVE',
+        'routingPreference': 'TRAFFIC_AWARE',
+        'computeAlternativeRoutes': False,
+        'routeModifiers': {
+            'avoidTolls': False,
+            'avoidHighways': False,
+            'avoidFerries': False,
         },
-        "travelMode": "DRIVE",
-        "routingPreference": "TRAFFIC_AWARE",
-        "computeAlternativeRoutes": False,
-        "routeModifiers": {
-            "avoidTolls": False,
-            "avoidHighways": False,
-            "avoidFerries": False
-        },
-        "languageCode": "en-US",
-        "units": "IMPERIAL"
+        'languageCode': 'en-US',
+        'units': 'IMPERIAL',
     }
 
     # ensure departure_time is in RFC3339 format
@@ -109,14 +103,16 @@ def get_route_duration_seconds(route_response: dict[str, Any]) -> int:
 
     The API returns duration as a string like "3600s".
     """
-    duration_str = route_response["routes"][0]["duration"]
-    return int(duration_str.rstrip("s"))
+    duration_str = route_response['routes'][0]['duration']
+    return int(duration_str.rstrip('s'))
 
 
-def pick_equidistant_points(points: List[Tuple[float, float]], n: int = 10) -> List[Tuple[float, float]]:
+def pick_equidistant_points(
+    points: List[Tuple[float, float]], n: int = 10
+) -> List[Tuple[float, float]]:
     """Pick n equidistant points from a list of points."""
     if n <= 0:
-        raise ValueError("Number of points must be greater than 0")
+        raise ValueError('Number of points must be greater than 0')
     step = max(1, len(points) // n)
 
     return [points[i] for i in range(0, len(points), step)]
