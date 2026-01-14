@@ -1,7 +1,5 @@
 """Tests for danger_assessment.py"""
 
-import pytest
-
 from danger_assessment import (
     temperature_severity,
     weather_conditions_severity,

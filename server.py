@@ -3,6 +3,9 @@
 
 from datetime import datetime, timedelta, timezone
 
+import dateutil.parser
+import polyline
+import requests
 from fastmcp import FastMCP
 
 from danger_assessment import (
@@ -16,10 +19,6 @@ from routing import (
     get_route_duration_seconds,
     pick_equidistant_points,
 )
-
-import dateutil.parser
-import polyline
-import requests
 
 
 def weather_code_to_condition(code: int) -> str:
