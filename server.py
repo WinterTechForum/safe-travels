@@ -140,7 +140,8 @@ def derive_route(
         arrival_time: Optional arrival time in RFC3339 or parseable format
 
     Returns:
-        List of (latitude, longitude) tuples representing equidistant waypoints along the route
+        List of (latitude, longitude) tuples representing equidistant waypoints
+        along the route
     """
     origin_coords = get_lat_long(origin)
     destination_coords = get_lat_long(destination)
@@ -181,7 +182,8 @@ def assess_route_danger(
         - destination: Ending location
         - departure_time: When the trip starts
         - arrival_time: When the trip ends
-        - waypoints: List of waypoint assessments with lat, lon, arrival_time, weather, and danger score
+        - waypoints: List of waypoint assessments with lat, lon, arrival_time,
+            weather, and danger score
         - average_danger: Average danger score across all waypoints
         - max_danger: Maximum danger score encountered
         - status: Overall safety status (SAFE, MODERATE, HAZARDOUS, EXTREME)

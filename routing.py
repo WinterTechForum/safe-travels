@@ -61,7 +61,9 @@ def compute_route(
     headers = {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': os.environ['GOOGLE_MAPS_API_KEY'],
-        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+        'X-Goog-FieldMask': (
+            'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
+        ),
     }
 
     data = {
