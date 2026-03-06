@@ -69,7 +69,8 @@ class TestComputeDangerScore:
             temp_c=40.0, wind_kph=80.0, condition='stormy', gust_kph=100.0
         )
         # temp: 2, wind: 6.25, condition: 6, precip: 0, vis: 0, ice: 0 (too hot)
-        assert score == pytest.approx(14.25)
+        # Raw sum is 14.25 but clamped to 10.0
+        assert score == pytest.approx(10.0)
 
     def test_gust_takes_precedence_over_wind(self):
         score_high_gust = _compute_danger_score(
