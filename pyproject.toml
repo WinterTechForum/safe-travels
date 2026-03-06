@@ -9,6 +9,7 @@ dependencies = [
     "polyline",
     "requests",
     "python-dateutil",
+    "authlib>=1.6.7",
 ]
 
 [project.optional-dependencies]
