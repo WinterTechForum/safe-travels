@@ -1,5 +1,7 @@
 """Tests for routing.py"""
 
+import os
+
 import pytest
 
 from routing import (
@@ -14,9 +16,13 @@ from routing import (
 class TestEnsureRfc3339Format:
     """Tests for ensure_rfc3339_format function."""
 
-    def test_iso_format_converted(self):
+    def test_iso_format_converted(self, monkeypatch):
+        import time
+
+        monkeypatch.setenv('TZ', 'US/Eastern')
+        time.tzset()
         result = ensure_rfc3339_format('2026-01-23T07:00:00')
-        assert result == '2026-01-23T12:00:00Z'  # Assumes local is EST (-5)
+        assert result == '2026-01-23T12:00:00Z'
 
     def test_already_rfc3339_with_z(self):
         result = ensure_rfc3339_format('2026-01-23T12:00:00Z')
