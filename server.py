@@ -137,13 +137,14 @@ def _compute_danger_score(
 
     max_wind_modifier = max(gust_modifier, wind_modifier)
 
-    return (
+    return min(
         weather_modifier
         + temp_modifier
         + max_wind_modifier
         + precip_modifier
         + vis_modifier
-        + ice_modifier
+        + ice_modifier,
+        10.0,
     )
 
 
