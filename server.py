@@ -148,6 +148,64 @@ def _compute_danger_score(
     )
 
 
+def _c_to_f(c: float) -> float:
+    return c * 9 / 5 + 32
+
+
+def _kph_to_mph(kph: float) -> float:
+    return kph * 0.621371
+
+
+def _mm_to_in(mm: float) -> float:
+    return mm * 0.0393701
+
+
+def _cm_to_in(cm: float) -> float:
+    return cm * 0.393701
+
+
+def _m_to_mi(m: float) -> float:
+    return m * 0.000621371
+
+
+def _m_to_ft(m: float) -> float:
+    return m * 3.28084
+
+
+def _fmt_temp(c: float) -> str:
+    return f"{_c_to_f(c):.1f}°F ({c:.1f}°C)"
+
+
+def _fmt_speed(kph: float) -> str:
+    return f"{_kph_to_mph(kph):.1f} mph ({kph:.1f} km/h)"
+
+
+def _fmt_rain(mm: float) -> str:
+    return f"{_mm_to_in(mm):.2f} in ({mm:.1f} mm)"
+
+
+def _fmt_snow(cm: float) -> str:
+    return f"{_cm_to_in(cm):.2f} in ({cm:.1f} cm)"
+
+
+def _fmt_visibility(m: float) -> str:
+    mi = _m_to_mi(m)
+    if mi >= 1:
+        return f"{mi:.1f} mi ({m:.0f} m)"
+    else:
+        ft = _m_to_ft(m)
+        return f"{ft:.0f} ft ({m:.0f} m)"
+
+
+def _fmt_depth(m: float) -> str:
+    inches = m * 39.3701
+    if inches >= 12:
+        feet = inches / 12
+        return f"{feet:.1f} ft ({m:.2f} m)"
+    else:
+        return f"{inches:.1f} in ({m:.2f} m)"
+
+
 mcp = FastMCP('safe-travels')
 
 
@@ -278,14 +336,14 @@ def assess_route_danger(
                 'lat': wd['lat'],
                 'lon': wd['lon'],
                 'arrival_time': wd['arrival_time'],
-                'temp_c': wd['temp_c'],
-                'wind_kph': wd['wind_kph'],
-                'gust_kph': wd['gust_kph'],
+                'temperature': _fmt_temp(wd['temp_c']),
+                'wind_speed': _fmt_speed(wd['wind_kph']),
+                'wind_gusts': _fmt_speed(wd['gust_kph']),
                 'condition': wd['condition'],
-                'rain_mm': wd['rain_mm'],
-                'snowfall_cm': wd['snowfall_cm'],
-                'visibility_m': wd['visibility_m'],
-                'snow_depth_m': wd['snow_depth_m'],
+                'rainfall': _fmt_rain(wd['rain_mm']),
+                'snowfall': _fmt_snow(wd['snowfall_cm']),
+                'visibility': _fmt_visibility(wd['visibility_m']),
+                'snow_depth': _fmt_depth(wd['snow_depth_m']),
                 'danger_score': round(danger_score, 2),
             }
         )
